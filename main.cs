@@ -7,44 +7,46 @@ class Program
 {
     public static void Main(string[] args)
     {
+        var valves = ReadValves("Example.txt");
+
+        foreach (var valve in valves)
+            Console.WriteLine(valve);
+    }
+
+    static List<Valve> ReadValves(string fileName)
+    {
         List<Valve> allValves = new();
 
-        foreach (var line in File.ReadLines("Input.txt"))
-            allValves.Add(Valve.From(line));        
+        foreach (var line in File.ReadLines(fileName))
+            allValves.Add(Valve.From(line));
 
         foreach (var valve in allValves)
             valve.ConnectNeighbors(allValves);
 
-        foreach (var valve in allValves)
-            Console.WriteLine(valve);
+        return allValves;
     }
 }
 
 class Valve
 {
-
     public string Name { get; }
     public int Flow { get; }
-
     public List<Valve> Neighbors = new();
 
-    IEnumerable<string> neighborValves;
+    IEnumerable<string> _neighborValves;
 
     public Valve(string name, int flow, IEnumerable<string> neighborValves)
     {
         Name = name;
         Flow = flow;
 
-        this.neighborValves = neighborValves;
+        _neighborValves = neighborValves;
     }
 
     public void ConnectNeighbors(List<Valve> allValves)
     {
-        foreach (var neighborName in neighborValves)
-        {
-            var match = allValves.First(n => n.Name == neighborName);
-            Neighbors.Add(match);
-        }
+        foreach (var neighborName in _neighborValves)
+            Neighbors.Add(allValves.First(n => n.Name == neighborName));
     }
 
     public static Valve From(string valveLine)
@@ -52,7 +54,8 @@ class Valve
         var name = valveLine.Substring(6, 2);
         var flow = int.Parse(string.Concat(valveLine.Substring(23).TakeWhile(c => c >= '0' && c <= '9')));
         var tokens = valveLine.Split(" ").Reverse();
-        var neighborValveNames = tokens.TakeWhile(t => !t.StartsWith("valve")).Reverse().Select(t => t.Substring(0, 2));        
+        var neighborValveNames = tokens.TakeWhile(t => !t.StartsWith("valve")).Reverse().Select(t => t.Substring(0, 2));
+
         return new Valve(name, flow, neighborValveNames);
     }
 
