@@ -7,7 +7,7 @@ class Program
 {
     public static void Main(string[] args)
     {
-        var valves = ReadValves("Example.txt");
+        var valves = ReadValves("Input.txt");
 
         foreach (var valve in valves)
             Console.WriteLine(valve);
@@ -21,23 +21,25 @@ class Program
             allValves.Add(Valve.From(line));
 
         foreach (var valve in allValves)
-            valve.ConnectNeighbors(allValves);        
+            valve.ConnectNeighbors(allValves);
 
-        return ClearClosedValves(allValves);
+        return ClearClosedValves(allValves)
+            .OrderBy(v => v.Name)
+            .ToList();
     }
 
-    static List<Valve> ClearClosedValves(IEnumerable<Valve> valves)
-    {    
+    static IEnumerable<Valve> ClearClosedValves(IEnumerable<Valve> valves)
+    {
         var clearedValves = new List<Valve>();
 
         foreach (var valve in valves)
         {
             if (valve.Name == "AA" || valve.Flow > 0)
                 clearedValves.Add(valve);
-            else             
+            else
                 RewireAroundClosedValve(valve);
         }
-        
+
 
         return clearedValves;
     }
@@ -46,7 +48,7 @@ class Program
     {
         var outgoing = valve.Neighbors;
         var incoming = outgoing.SelectMany(t => t.To.Neighbors).Where(t => t.To == valve).ToList();
-        
+
         foreach (var oldIncoming in incoming)
         {
             var outgoingToDifferentPlace = outgoing.Where(t => t.To != oldIncoming.From);
@@ -54,9 +56,9 @@ class Program
             {
                 var newTunnel = Combine(oldIncoming, oldOutgoing);
                 oldIncoming.From.Neighbors.Remove(oldIncoming);
-                oldIncoming.From.Neighbors.Add(newTunnel);               
+                oldIncoming.From.Neighbors.Add(newTunnel);
             }
-        }        
+        }
     }
 
     static Tunnel Combine(Tunnel t1, Tunnel t2)
@@ -102,8 +104,8 @@ class Valve
 
     public override string ToString()
     {
-        var neighbors = string.Join(" / ", Neighbors.Select(n => $"{n.To.Name} ({n.Steps} step{(n.Steps > 1 ? "s": "")})"));
-        return $"Valve {Name} with flow={Flow} connected to {neighbors}";
+        var neighbors = string.Join(" / ", Neighbors.Select(t => $"{t.To.Name} (f={t.To.Flow}, s={t.Steps})"));
+        return $"Valve {Name}, f={Flow} --> {neighbors}";
     }
 }
 
