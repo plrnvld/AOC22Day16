@@ -171,8 +171,8 @@ class Solver
 
         while (n < numSteps)
         {
+            nextLevel = SolveNext(nextLevel, maxSteps - n);
             n += 1;
-            nextLevel = SolveNext(nextLevel, maxSteps - n + 1);
         }
 
         return nextLevel;
