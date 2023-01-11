@@ -8,6 +8,8 @@ class Program
     static string start = "AA";
     static IList<string> exampleSteps = new[] { "DD", "!CC", "BB", "AA", "II", "JJ", "II", "AA", "DD", "!EE", "FF", "GG", "HH", "GG", "FF", "EE", "DD", "CC" }.ToList();
 
+    static IList<string> someAnswer = new[] { "!GC", "!IR", "!JZ", "LY","!EF","WL","EJ","CP","!ZK","!IV","UC","!JD","!IZ","SS","!WI","IR","!WG","LL","!SK","DD","!YY" }.ToList();
+
     public static void Main(string[] args)
     {
         var valves = ReadValves("Example.txt", clearClosed: false);
@@ -21,11 +23,20 @@ class Program
         var result = solver.Solve(start, 30, 30);
 
         Console.WriteLine();
-
+        
+        var bestScore = 0;
+        
         foreach (var (name, path) in result)
-            Console.WriteLine($"Valve {name} has best path {path}");
+        {
+            Console.WriteLine($"Valve {name} with {path}");
+            if (path.Score > bestScore)
+                bestScore = path.Score;            
+        }
 
-        // var score = CalculateScore(start, exampleSteps, valves);
+        Console.WriteLine();
+        Console.WriteLine($"Best score is {bestScore}");
+        
+        // var score = CalculateScore(start, someAnswer, valves);
         // Console.WriteLine();
         // Console.WriteLine($"Score={score}");
     }
@@ -156,14 +167,12 @@ class Solver
 
         var groups = firstLevel.GroupBy(p => p.Dest);
 
-        Console.WriteLine($"  > calc level {n}");
-        var nextLevel = groups.Select(group => (group.Key, group.MaxBy(p => p.Score)));
+        var nextLevel = groups.Select(group => (group.Key, group.MinBy(p => p.Score)));
 
         while (n < numSteps)
         {
             n += 1;
-            Console.WriteLine($"  > calc level {n}");
-            nextLevel = SolveNext(nextLevel, maxSteps - n);
+            nextLevel = SolveNext(nextLevel, maxSteps - n + 1);
         }
 
         return nextLevel;
@@ -292,3 +301,5 @@ struct Move
 
     public Valve GetValve(Dictionary<string, Valve> valves) => valves[content];
 }
+
+// 1832 is too low
