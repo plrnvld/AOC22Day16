@@ -6,6 +6,7 @@ using System.Linq;
 class Program
 {
     static string start = "AA";
+    static int maxSteps = 30;
     static IList<string> exampleSteps = new[] { "DD", "!CC", "BB", "AA", "II", "JJ", "II", "AA", "DD", "!EE", "FF", "GG", "HH", "GG", "FF", "EE", "DD", "CC" }.ToList();
 
     static IList<string> someAnswer = new[] { "!GC", "!IR", "!JZ", "LY","!EF","WL","EJ","CP","!ZK","!IV","UC","!JD","!IZ","SS","!WI","IR","!WG","LL","!SK","DD","!YY" }.ToList();
@@ -20,25 +21,54 @@ class Program
         Console.WriteLine();
 
         var solver = new Solver(valves);
-        var result = solver.Solve(start, 30, 30);
+        var maxBenefit = 0;
+        Valve bestValve = null;
 
-        Console.WriteLine();
-        
-        var bestScore = 0;
-        
-        foreach (var (name, path) in result)
+        void CheckValve(Valve valve, Path path)
         {
-            Console.WriteLine($"Valve {name} with {path}");
-            if (path.Score > bestScore)
-                bestScore = path.Score;            
+            if (path.CanOpen(valve.Name))
+            {
+                var benefit = path.Size() == 0 
+                    ? (valve.IsOpen ? 0 : valve.Flow * (path.MaxSteps - 1)) 
+                    : path.LastValveOpeningBenefit(solver.Valves);
+
+                Console.WriteLine($"Benefit of opening {valve.Name} is {benefit}");
+                
+                if (benefit > maxBenefit)
+                {
+                    maxBenefit = benefit;
+                    bestValve = valve;
+                }                
+            }            
         }
 
+        solver.VisitBFS(start, CheckValve, maxSteps);
+
         Console.WriteLine();
-        Console.WriteLine($"Best score is {bestScore}");
+        Console.WriteLine($"Best next valve is {bestValve} with benefit {maxBenefit}");
+
+        // var result = solver.Solve(start, 30, maxSteps);
+        //
+        // var bestScore = 0;
         
-        // var score = CalculateScore(start, someAnswer, valves);
-        // Console.WriteLine();
-        // Console.WriteLine($"Score={score}");
+        // foreach (var (name, path) in result)
+        // {
+        //    Console.WriteLine($"Valve {name} with {path}");
+        //    if (path.Score > bestScore)
+        //        bestScore = path.Score;            
+        //}
+
+        //Console.WriteLine();
+        //Console.WriteLine($"Best score is {bestScore}");
+
+        /*
+        var scoreToCheck = "DD,!CC,BB,!AA,!II,JJ,!II,!AA,!DD,!EE,!FF,!GG,HH,!GG,!FF,EE,!DD,CC,!DD,!EE,FF,!GG,!HH";
+        Console.WriteLine(scoreToCheck);
+        var steps = scoreToCheck.Split(",");
+        var score = CalculateScore(start, steps, valves);
+        Console.WriteLine();
+        Console.WriteLine($"Score={score}");
+        */
     }
 
     static List<Valve> ReadValves(string fileName, bool clearClosed)
@@ -151,155 +181,5 @@ class Program
     }
 }
 
-class Solver
-{
-    Dictionary<string, Valve> valves;
-
-    public Solver(IEnumerable<Valve> _valves)
-    {
-        this.valves = _valves.ToDictionary(v => v.Name);
-    }
-
-    public IEnumerable<(string, Path)> Solve(string start, int numSteps, int maxSteps)
-    {
-        var n = 1;
-        var firstLevel = valves[start].Neighbors.Select(t => new Path(new List<(string, bool)> { (t.To.Name, false) }, 0));
-
-        var groups = firstLevel.GroupBy(p => p.Dest);
-
-        var nextLevel = groups.Select(group => (group.Key, group.MinBy(p => p.Score)));
-
-        while (n < numSteps)
-        {
-            nextLevel = SolveNext(nextLevel, maxSteps - n);
-            n += 1;
-        }
-
-        return nextLevel;
-    }
-
-    IEnumerable<(string, Path)> SolveNext(IEnumerable<(string name, Path path)> currPaths, int remainingSteps)
-    {
-
-        var nextPaths = currPaths.SelectMany(t =>
-            {
-                var nextMoves = t.path.NextMoves(valves);
-                return nextMoves.Select(m => t.path.AddMove(m, remainingSteps, valves));
-            });
-
-        var groups = nextPaths.GroupBy(p => p.Dest);
-
-        foreach (var group in groups)
-            yield return (group.Key, group.MaxBy(p => p.Score));
-    }
-}
-
-class Valve
-{
-    public string Name { get; }
-    public int Flow { get; }
-
-    IEnumerable<string> _neighborValves;
-
-    public List<Tunnel> Neighbors = new();
-    public bool IsOpen { get; set; }
-
-    public Valve(string name, int flow, IEnumerable<string> neighborValves)
-    {
-        Name = name;
-        Flow = flow;
-
-        IsOpen = false;
-
-        _neighborValves = neighborValves;
-    }
-
-    public void ConnectNeighbors(List<Valve> allValves)
-    {
-        foreach (var neighborName in _neighborValves)
-            Neighbors.Add(new Tunnel(this, allValves.First(n => n.Name == neighborName), 1));
-    }
-
-    public static Valve From(string valveLine)
-    {
-        var name = valveLine.Substring(6, 2);
-        var flow = int.Parse(string.Concat(valveLine.Substring(23).TakeWhile(c => c >= '0' && c <= '9')));
-        var tokens = valveLine.Split(" ").Reverse();
-        var neighborValveNames = tokens.TakeWhile(t => !t.StartsWith("valve")).Reverse().Select(t => t.Substring(0, 2));
-
-        return new Valve(name, flow, neighborValveNames);
-    }
-
-    public bool ReachableFrom(Valve valve)
-        => valve.Neighbors.Any(t => t.To == this);
-
-    public override string ToString()
-    {
-        var neighbors = string.Join(" / ", Neighbors.Select(t => $"{t.To.Name} (f={t.To.Flow}, s={t.Steps})"));
-        return $"Valve {Name}, f={Flow} --> {neighbors}";
-    }
-}
-
-record class Path(List<(string name, bool isOpen)> Steps, int Score)
-{
-    public string Dest => Steps[^1].name;
-
-    public Path AddMove(Move move, int remainingSteps, Dictionary<string, Valve> valves)
-    {
-        var newSteps = new List<(string, bool)>(Steps);
-
-        if (move.IsOpen)
-        {
-            var (last, _) = newSteps[^1];
-            newSteps.RemoveAt(newSteps.Count - 1);
-            newSteps.Add((last, true));
-            var newScore = Score + (remainingSteps - 1) * valves[last].Flow;
-            return new Path(newSteps, newScore);
-        }
-
-        var next = move.GetValve(valves);
-        newSteps.Add((next.Name, next.IsOpen));
-        return new Path(newSteps, Score);
-    }
-
-    bool CanOpen(string name) => !Steps.Any(s => s == (name, true));
-
-    public IEnumerable<Move> NextMoves(Dictionary<string, Valve> valves)
-    {
-        var (last, isOpen) = Steps.Last();
-        if (!isOpen && CanOpen(last))
-            yield return Move.Open;
-
-        foreach (var t in valves[last].Neighbors)
-            yield return Move.Step(t.To.Name);
-    }
-
-    public int Size() => Steps.Select(t => (t.isOpen ? 2 : 1)).Sum();
-
-    public override string ToString()
-    {
-        var steps = string.Join(",", Steps.Select(t => $"{(t.isOpen ? "" : "!")}{t.name}"));
-        return $"Path ({Score}, {Size()}): {steps}";
-    }
-}
-
-record class Tunnel(Valve From, Valve To, int Steps);
-
-struct Move
-{
-    const string OPEN = "open";
-    static Move openMove = new Move(OPEN);
-    string content;
-
-    Move(string content) => this.content = content;
-
-    public static Move Open => openMove;
-
-    public static Move Step(string next) => new Move(next);
-
-    public bool IsOpen => content == OPEN;
-
-    public Valve GetValve(Dictionary<string, Valve> valves) => valves[content];
-}
 
 // 1832 is too low
