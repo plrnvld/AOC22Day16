@@ -2,25 +2,25 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-record class Path(List<(string name, bool isOpen)> Steps)
+record class ScorePath(List<(string name, bool isOpen)> Steps, int Score, int MaxSteps)
 {
-    public static Path Empty(int maxSteps) => new Path(new List<(string, bool)>());
-
+    public static ScorePath Empty(int maxSteps) => new ScorePath(new List<(string, bool)>(), 0, maxSteps);
+    
     public string Dest => Steps[^1].name;
 
-    public Path AddValveWithoutOpening(Valve valve, Dictionary<string, Valve> valves)
+    public ScorePath AddValveWithoutOpening(Valve valve, Dictionary<string, Valve> valves)
     {
         var move = Move.Step(valve.Name);
         return AddMove(move, valves);
     }
 
-    public Path AddValveWithOpening(Valve valve, Dictionary<string, Valve> valves)
+    public ScorePath AddValveWithOpening(Valve valve, Dictionary<string, Valve> valves)
     {
         var newPath = AddValveWithoutOpening(valve, valves);
         return newPath.AddMove(Move.Open, valves);
     }
 
-    public Path AddMove(Move move, Dictionary<string, Valve> valves)
+    public ScorePath AddMove(Move move, Dictionary<string, Valve> valves)
     {
         var newSteps = new List<(string, bool)>(Steps);
 
@@ -29,12 +29,13 @@ record class Path(List<(string name, bool isOpen)> Steps)
             var (last, _) = newSteps[^1];
             newSteps.RemoveAt(newSteps.Count - 1);
             newSteps.Add((last, true));
-            return new Path(newSteps);
+            var newScore = Score + (MaxSteps - Size() - 1) * valves[last].Flow;
+            return new ScorePath(newSteps, newScore, MaxSteps);
         }
 
         var next = move.GetValve(valves);
         newSteps.Add((next.Name, next.IsOpen));
-        return new Path(newSteps);
+        return new ScorePath(newSteps, Score, MaxSteps);
     }
 
     public bool CanOpen(string name) => !Steps.Any(s => s == (name, true));
@@ -49,34 +50,21 @@ record class Path(List<(string name, bool isOpen)> Steps)
             yield return Move.Step(t.To.Name);
     }
 
-    public IEnumerable<Path> NextPaths(Dictionary<string, Valve> valves, Valve currValve)
-    {
-        // ###############################
-        if (Steps.Count == 0)
-        {
-            var neighbors = currValve.Neighbors.Select(t => t.To);
-            return neighbors.Select(n => new Path(new List<(string, bool)> { (n.Name, false) }));
-        }
-
-        var moves = NextMoves(valves);
-        return moves.Select(m => AddMove(m, valves));
-    }
-
     public int Size() => Steps.Select(t => (t.isOpen ? 2 : 1)).Sum();
 
-    public int LastValveOpeningBenefit(Dictionary<string, Valve> valves, int maxSteps)
+    public int LastValveOpeningBenefit(Dictionary<string, Valve> valves)
     {
         var (last, isOpen) = Steps.Last();
         if (isOpen || !CanOpen(last))
             throw new Exception($"Cannot open last valve {last}");
 
-        return (maxSteps - Size() - 1) * valves[last].Flow;
-
+        return (MaxSteps - Size() - 1) * valves[last].Flow;
+        
     }
 
     public override string ToString()
     {
         var steps = string.Join(",", Steps.Select(t => $"{(t.isOpen ? "" : "!")}{t.name}"));
-        return $"Path (size={Size()}): {steps}";
-    }
+        return $"ScorePath ({Score}, {Size()}): {steps}";
+    }   
 }

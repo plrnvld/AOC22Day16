@@ -24,7 +24,7 @@ class Program
         var maxBenefit = 0;
         Valve bestValve = null;
 
-        void CheckValve(Valve valve, Path path)
+        void CheckValve(Valve valve, ScorePath path)
         {
             if (path.CanOpen(valve.Name))
             {

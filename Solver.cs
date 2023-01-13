@@ -11,11 +11,11 @@ class Solver
         Valves = _valves.ToDictionary(v => v.Name);
     }
 
-    public IEnumerable<(string, Path)> Solve(string start, int numSteps, int maxSteps)
+    public IEnumerable<(string, ScorePath)> Solve(string start, int numSteps, int maxSteps)
     {
         var n = 1;
         var firstLevel = Valves[start].Neighbors
-            .Select(t => new Path(new List<(string, bool)> { (t.To.Name, false) }, 0, maxSteps));
+            .Select(t => new ScorePath(new List<(string, bool)> { (t.To.Name, false) }, 0, maxSteps));
 
         var groups = firstLevel.GroupBy(p => p.Dest);
 
@@ -30,7 +30,7 @@ class Solver
         return nextLevel;
     }
 
-    IEnumerable<(string, Path)> SolveNext(IEnumerable<(string name, Path path)> currPaths)
+    IEnumerable<(string, ScorePath)> SolveNext(IEnumerable<(string name, ScorePath path)> currPaths)
     {
         var nextPaths = currPaths.SelectMany(t =>
             {
@@ -44,10 +44,24 @@ class Solver
             yield return (group.Key, group.MaxBy(p => p.Score));
     }
 
-    public void VisitBFS(string start, Action<Valve, Path> valveAction, int maxSteps)
+    public IEnumerable<Path> GetPathsFrom(string start, int numSteps, int maxPathLength)
     {
-        var currLevel = new List<(Valve, Path)> { (Valves[start], Path.Empty(maxSteps)) };
+        var currLevel = new List<(Valve, Path)> { (Valves[start], Path.Empty(maxPathLength)) };
         var nextLevel = new List<(Valve, Path)>();
+
+        foreach (var (valve, path) in currLevel)
+        {
+            // ##################
+            
+        }
+
+        return Enumerable.Empty<Path>();
+    }
+
+    public void VisitBFS(string start, Action<Valve, ScorePath> valveAction, int maxSteps)
+    {
+        var currLevel = new List<(Valve, ScorePath)> { (Valves[start], ScorePath.Empty(maxSteps)) };
+        var nextLevel = new List<(Valve, ScorePath)>();
         var visited = new List<Valve>();
 
         var n = 0;
@@ -69,7 +83,7 @@ class Solver
             }
 
             n += 1;
-            currLevel = new List<(Valve, Path)>(nextLevel);
+            currLevel = new List<(Valve, ScorePath)>(nextLevel);
             nextLevel.Clear();
         }
     }
