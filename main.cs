@@ -7,7 +7,7 @@ class Program
 {
     static string start = "AA";
     static int maxSteps = 30;
-    
+
     // "DD,!CC,BB,!AA,!II,JJ,!II,!AA,!DD,!EE,!FF,!GG,HH,!GG,!FF,EE,!DD,CC"
 
     public static void Main(string[] args)
@@ -19,11 +19,11 @@ class Program
 
         Console.WriteLine();
 
-        var solver = new Solver(valves);        
+        var solver = new Solver(valves);
         var paths = solver.FindAllPaths(start, maxSteps);
 
         var bestScore = 0;
-        
+
         foreach (var path in paths)
         {
             bestScore = Math.Max(bestScore, path.Score);
@@ -116,6 +116,3 @@ class Program
         return allValves.FirstOrDefault(v => v.Name == name) ?? throw new Exception($"Valve {name} not found");
     }
 }
-
-
-// 1832 is too low

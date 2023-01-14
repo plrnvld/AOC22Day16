@@ -16,15 +16,6 @@ class Solver
             routingDict.Add(name, new Lazy<Dictionary<string, IList<string>>>(() => DestDirections(name)));
     }
 
-    /*
-    public IEnumerable<ScorePath> FindAllPaths(string start, int maxSteps)
-    {
-        var valvesToOpen = Valves.Values.Where(v => v.Flow > 0).ToList();
-        var paths = ExpandPaths(start, Path.Empty(), 0, valvesToOpen, maxSteps);
-        return paths.Select(p => ScorePath.From(p, maxSteps, Valves));        
-    }
-    */
-
     public IEnumerable<ScorePath> FindAllPaths(string start, int maxSteps)
     {
         var moves = Valves[start].Neighbors.Select(n => Move.Step(n.Name));
@@ -57,47 +48,16 @@ class Solver
 
     public IEnumerable<ScorePath> WhereSubPathIsOptimal(int i, List<ScorePath> paths)
     {
-        if (i == 10 || i == 15 || i == 20 || i == 25)
-            return paths.OrderByDescending(p => p.Score).Take(1000);
-
         var result = new List<ScorePath>();
         foreach (var group in paths.GroupBy(p => p.FilterKey))        
             result.Add(group.MaxBy(p => p.Score));
 
-        return result;
-    }
-
-    public List<Path> ExpandPaths(string currentLocation, Path currPath, int numSteps, IEnumerable<Valve> closedValves, int maxSteps)
-    {
-        var result = new List<Path>();
-
-        foreach (var closedValve in closedValves)
-        {
-            var steps = GetSteps(currentLocation, closedValve.Name);
-            var numStepsTotal = numSteps + steps.Count + 1; // Include opening the destination value
-
-            if (numStepsTotal > maxSteps)
-            {
-                result.Add(currPath);
-            }
-            else
-            {
-                var nextPath = currPath.AddSteps(steps, openLast: true);
-
-                var remainingValves = closedValves.Where(v => v != closedValve);
-                if (remainingValves.Any())
-                    result.AddRange(ExpandPaths(nextPath.Dest, nextPath, numStepsTotal, remainingValves, maxSteps));
-                else
-                    result.Add(nextPath);
-            }
-        }
+        if (i == 10 || i == 15 || i == 20 || i == 25)
+            result = paths.OrderByDescending(p => p.Score).Take(200).ToList();
 
         return result;
     }
-
-
-
-
+    
     public Dictionary<string, IList<string>> DestDirections(string start)
     {
         Console.WriteLine($"> calculcating destinations from {start}.");

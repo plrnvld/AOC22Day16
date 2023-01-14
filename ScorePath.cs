@@ -98,7 +98,7 @@ record class ScorePath(List<(string name, bool isOpen)> Steps, int Score, int Ma
             if (Steps.Count == 0)
                 return string.Empty;
 
-            var initNames = Steps.Select(s => s.Item1).Take(Steps.Count - 1);
+            var initNames = Steps.Where(s => s.Item2).Select(s => s.Item1).Take(Steps.Count - 1);
             var lastName = Steps[^1];
 
             return string.Concat(initNames.OrderBy(n => n)) + lastName;
