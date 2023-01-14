@@ -22,76 +22,16 @@ class Program
 
         var solver = new Solver(valves);
 
-        const string origin = "AA";
-        var destMap = solver.DestDirections(origin);
+        ShowSteps("AA", "FF", solver);
+        ShowSteps("AA", "HH", solver);
+        ShowSteps("II", "AA", solver);        
+    }
 
-        foreach (var (dest, steps) in destMap)
-        {
-            Console.WriteLine($"Route {origin}->{dest}: {string.Join("->", steps)} ");            
-        }
-
+    static void ShowSteps(string from, string to, Solver solver)
+    {
+        var steps = solver.GetSteps(from, to);
+        Console.WriteLine($"{from}->{to}: [{string.Join(",", steps)}]");
         Console.WriteLine();
-        
-        const string origin2 = "HH";
-        var destMap2 = solver.DestDirections(origin2);
-
-        foreach (var (dest, steps) in destMap2)
-        {
-            Console.WriteLine($"Route {origin2}->{dest}: {string.Join("->", steps)} ");            
-        }
-        
-        
-        /*
-        var maxBenefit = 0;
-        Valve bestValve = null;
-       
-        void CheckValve(Valve valve, ScorePath path)
-        {
-            if (path.CanOpen(valve.Name))
-            {
-                var benefit = path.Size() == 0 
-                    ? (valve.IsOpen ? 0 : valve.Flow * (path.MaxSteps - 1)) 
-                    : path.LastValveOpeningBenefit(solver.Valves);
-
-                Console.WriteLine($"Benefit of opening {valve.Name} is {benefit}");
-                
-                if (benefit > maxBenefit)
-                {
-                    maxBenefit = benefit;
-                    bestValve = valve;
-                }                
-            }            
-        }
-        
-
-        solver.VisitBFS(start, CheckValve, maxSteps);
-
-        Console.WriteLine();
-        Console.WriteLine($"Best next valve is {bestValve} with benefit {maxBenefit}");
-        */
-        
-        // var result = solver.Solve(start, 30, maxSteps);
-        //
-        // var bestScore = 0;
-        
-        // foreach (var (name, path) in result)
-        // {
-        //    Console.WriteLine($"Valve {name} with {path}");
-        //    if (path.Score > bestScore)
-        //        bestScore = path.Score;            
-        //}
-
-        //Console.WriteLine();
-        //Console.WriteLine($"Best score is {bestScore}");
-
-        /*
-        var scoreToCheck = "DD,!CC,BB,!AA,!II,JJ,!II,!AA,!DD,!EE,!FF,!GG,HH,!GG,!FF,EE,!DD,CC,!DD,!EE,FF,!GG,!HH";
-        Console.WriteLine(scoreToCheck);
-        var steps = scoreToCheck.Split(",");
-        var score = CalculateScore(start, steps, valves);
-        Console.WriteLine();
-        Console.WriteLine($"Score={score}");
-        */
     }
 
     static List<Valve> ReadValves(string fileName, bool clearClosed)

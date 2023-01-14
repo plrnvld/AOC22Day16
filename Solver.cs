@@ -5,10 +5,15 @@ using System.Linq;
 class Solver
 {
     public Dictionary<string, Valve> Valves { get; }
+    public Dictionary<string, Lazy<Dictionary<string, IEnumerable<string>>>> routingDict;
 
     public Solver(IEnumerable<Valve> _valves)
     {
         Valves = _valves.ToDictionary(v => v.Name);
+
+        routingDict = new();        
+        foreach (var name in Valves.Keys)        
+            routingDict.Add(name, new Lazy<Dictionary<string, IEnumerable<string>>>(() => DestDirections(name)));
     }
 
     public Dictionary<string, IEnumerable<string>> DestDirections(string start)
@@ -17,12 +22,13 @@ class Solver
 
         void SaveValveToDict(Valve valve, Path path) =>
             destMap.Add(valve.Name, path.Steps.Select(tup => tup.Item1));
-        
+
         VisitBFS(start, SaveValveToDict);
 
         return destMap;
     }
-    
+
+    public IEnumerable<string> GetSteps(string from, string to) => routingDict[from].Value[to];
 
     public IEnumerable<(string, ScorePath)> Solve(string start, int numSteps, int maxSteps)
     {
@@ -65,7 +71,7 @@ class Solver
         foreach (var (valve, path) in currLevel)
         {
             // ##################
-            
+
         }
 
         return Enumerable.Empty<Path>();
