@@ -37,6 +37,16 @@ record class Path(List<(string name, bool isOpen)> Steps)
         return new Path(newSteps);
     }
 
+    public Path AddSteps(IList<string> newSteps, bool openLast)
+    {
+        var newStepsWithBool = newSteps.Select(s => (s, false)).ToList();
+
+        if (openLast && newStepsWithBool.Any())
+            newStepsWithBool[^1] = (newStepsWithBool[^1].Item1, true);
+
+        return new Path(Steps.Concat(newStepsWithBool).ToList());
+    }
+
     public bool CanOpen(string name) => !Steps.Any(s => s == (name, true));
 
     public IEnumerable<Move> NextMoves(Dictionary<string, Valve> valves)
@@ -76,7 +86,14 @@ record class Path(List<(string name, bool isOpen)> Steps)
 
     public override string ToString()
     {
-        var steps = string.Join(",", Steps.Select(t => $"{(t.isOpen ? "" : "!")}{t.name}"));
+        var steps = string.Join(",", Steps.Select(tup => $"{(tup.isOpen ? "" : "!")}{tup.name}"));
         return $"Path (size={Size()}): {steps}";
+    }
+
+    public static Path FromAnswer(string answer)
+    {
+        var splitted = answer.Split(",");
+        var steps = splitted.Select(step => step.StartsWith("!") ? (step.Substring(1), false) : (step, true)).ToList();
+        return new Path(steps);
     }
 }

@@ -9,6 +9,8 @@ class Program
     static int maxSteps = 30;
     static IList<string> exampleSteps = new[] { "DD", "!CC", "BB", "AA", "II", "JJ", "II", "AA", "DD", "!EE", "FF", "GG", "HH", "GG", "FF", "EE", "DD", "CC" }.ToList();
 
+    // "DD,!CC,BB,!AA,!II,JJ,!II,!AA,!DD,!EE,!FF,!GG,HH,!GG,!FF,EE,!DD,CC"
+
     static IList<string> someAnswer = new[] { "!GC", "!IR", "!JZ", "LY","!EF","WL","EJ","CP","!ZK","!IV","UC","!JD","!IZ","SS","!WI","IR","!WG","LL","!SK","DD","!YY" }.ToList();
 
     public static void Main(string[] args)
@@ -20,11 +22,29 @@ class Program
 
         Console.WriteLine();
 
-        var solver = new Solver(valves);
+        var solver = new Solver(valves);        
+        var paths = solver.FindAllPaths(start, maxSteps);
 
-        ShowSteps("AA", "FF", solver);
-        ShowSteps("AA", "HH", solver);
-        ShowSteps("II", "AA", solver);        
+        var bestScore = 0;
+        
+        foreach (var path in paths)
+        {
+            bestScore = Math.Max(bestScore, path.Score);
+            //if (path.Score > 1600)
+            //    Console.WriteLine($"Good: {path}");  
+        }
+
+        Console.WriteLine($"\nBest score: {bestScore}");
+
+        // Good: ScorePath (1695, 18): BB,CC,DD,!AA,!II,JJ,!II,!AA,!DD,!EE,!FF,!GG,HH
+        // "DD,!CC,BB,!AA,!II,JJ,!II,!AA,!DD,!EE,!FF,!GG,HH,!GG,!FF,EE,!DD,CC"
+
+        /*
+        var path = Path.FromAnswer("DD,!CC,BB,!AA,!II,JJ,!II,!AA,!DD,!EE,!FF,!GG,HH,!GG,!FF,EE,!DD,CC");
+        var scorePath = ScorePath.From(path, maxSteps, solver.Valves);
+
+        Console.WriteLine(scorePath);
+        */
     }
 
     static void ShowSteps(string from, string to, Solver solver)

@@ -5,7 +5,7 @@ using System.Linq;
 record class ScorePath(List<(string name, bool isOpen)> Steps, int Score, int MaxSteps)
 {
     public static ScorePath Empty(int maxSteps) => new ScorePath(new List<(string, bool)>(), 0, maxSteps);
-    
+
     public string Dest => Steps[^1].name;
 
     public ScorePath AddValveWithoutOpening(Valve valve, Dictionary<string, Valve> valves)
@@ -59,12 +59,35 @@ record class ScorePath(List<(string name, bool isOpen)> Steps, int Score, int Ma
             throw new Exception($"Cannot open last valve {last}");
 
         return (MaxSteps - Size() - 1) * valves[last].Flow;
-        
+
     }
 
     public override string ToString()
     {
         var steps = string.Join(",", Steps.Select(t => $"{(t.isOpen ? "" : "!")}{t.name}"));
         return $"ScorePath ({Score}, {Size()}): {steps}";
-    }   
+    }
+
+    public static ScorePath From(Path path, int maxSteps, Dictionary<string, Valve> valves)
+    {
+        var score = 0;
+        var turn = 0;
+        for (var i = 1; i <= path.Steps.Count; i++)
+        {
+            turn++;
+            var (name, isOpen) = path.Steps[i - 1];
+            // Console.WriteLine($"[{turn}] Moving to {name}");
+            if (isOpen)
+            {
+                turn++;
+                var n = maxSteps - turn;
+                var addedScore = n * valves[name].Flow;
+                
+                // Console.WriteLine($"[{turn}] Opening valve {name}, adding {addedScore} ({valves[name].Flow} * {n})");    
+                score += addedScore;
+            }
+        }
+
+        return new ScorePath(path.Steps, score, maxSteps);
+    }
 }

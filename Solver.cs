@@ -5,30 +5,100 @@ using System.Linq;
 class Solver
 {
     public Dictionary<string, Valve> Valves { get; }
-    public Dictionary<string, Lazy<Dictionary<string, IEnumerable<string>>>> routingDict;
+    public Dictionary<string, Lazy<Dictionary<string, IList<string>>>> routingDict;
 
     public Solver(IEnumerable<Valve> _valves)
     {
         Valves = _valves.ToDictionary(v => v.Name);
 
-        routingDict = new();        
-        foreach (var name in Valves.Keys)        
-            routingDict.Add(name, new Lazy<Dictionary<string, IEnumerable<string>>>(() => DestDirections(name)));
+        routingDict = new();
+        foreach (var name in Valves.Keys)
+            routingDict.Add(name, new Lazy<Dictionary<string, IList<string>>>(() => DestDirections(name)));
     }
 
-    public Dictionary<string, IEnumerable<string>> DestDirections(string start)
+    /*
+    public ScorePath FindPath(string start, int maxSteps)
     {
-        Dictionary<string, IEnumerable<string>> destMap = new();
+        var valvesToOpen = Valves.Values.Where(v => v.Flow > 0).ToList();
+        var numSteps = 0;
+        var path = Path.Empty();
+
+        while (numSteps < maxSteps && valvesToOpen.Any())
+        {
+            var next = valvesToOpen.First();
+            valvesToOpen.RemoveAt(0);
+
+            // Console.WriteLine($"  > moving to {next.Name}.");
+
+            var steps = GetSteps(start, next.Name);
+            var addedStepCount = steps.Count + 1; // Include opening the destination value
+
+            if (numSteps + addedStepCount > maxSteps)
+            {
+                // Console.WriteLine($"  > cannot move to {next.Name}, step count would be {(numSteps + addedStepCount)}.");
+                return ScorePath.From(path, maxSteps, Valves);
+            }
+
+            path = path.AddSteps(steps, openLast: true);
+            numSteps += addedStepCount;
+        }
+
+        return ScorePath.From(path, maxSteps, Valves);
+    }
+    */
+
+    public IEnumerable<ScorePath> FindAllPaths(string start, int maxSteps)
+    {
+        var valvesToOpen = Valves.Values.Where(v => v.Flow > 0).ToList();
+        return ExpandPaths(start, Path.Empty(), 0, valvesToOpen, maxSteps);
+    }
+
+    public List<ScorePath> ExpandPaths(string currentLocation, Path currPath, int numSteps, IEnumerable<Valve> closedValves, int maxSteps)
+    {
+        var result = new List<ScorePath>();
+
+        foreach (var closedValve in closedValves)
+        {
+            var numStepsLocal = numSteps;
+            
+            var steps = GetSteps(currentLocation, closedValve.Name);
+            var addedStepCount = steps.Count + 1; // Include opening the destination value
+
+            if (numStepsLocal + addedStepCount > maxSteps)
+            {
+                result.Add(ScorePath.From(currPath, maxSteps, Valves));
+            }
+            else 
+            {
+                var nextPath = currPath.AddSteps(steps, openLast: true);
+                numStepsLocal += addedStepCount;
+
+                var remainingValves = closedValves.Where(v => v != closedValve);
+                if (remainingValves.Any())
+                    result.AddRange(ExpandPaths(nextPath.Dest, nextPath, numStepsLocal, remainingValves, maxSteps));
+                else
+                    result.Add(ScorePath.From(nextPath, maxSteps, Valves));
+            }
+        }
+
+        return result;
+    }
+
+    public Dictionary<string, IList<string>> DestDirections(string start)
+    {
+        Console.WriteLine($"> calculcating destinations from {start}.");
+
+        Dictionary<string, IList<string>> destMap = new();
 
         void SaveValveToDict(Valve valve, Path path) =>
-            destMap.Add(valve.Name, path.Steps.Select(tup => tup.Item1));
+            destMap.Add(valve.Name, path.Steps.Select(tup => tup.Item1).ToList());
 
         VisitBFS(start, SaveValveToDict);
 
         return destMap;
     }
 
-    public IEnumerable<string> GetSteps(string from, string to) => routingDict[from].Value[to];
+    public IList<string> GetSteps(string from, string to) => routingDict[from].Value[to];
 
     public IEnumerable<(string, ScorePath)> Solve(string start, int numSteps, int maxSteps)
     {
@@ -117,8 +187,6 @@ class Solver
 
         while (visited.Count < Valves.Count)
         {
-            Console.WriteLine($"> Visit level {n}, num visited is {visited.Count}");
-
             foreach (var (curr, path) in currLevel)
             {
                 if (!visited.Contains(curr))
