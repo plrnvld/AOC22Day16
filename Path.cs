@@ -4,7 +4,7 @@ using System.Linq;
 
 record class Path(List<(string name, bool isOpen)> Steps)
 {
-    public static Path Empty(int maxSteps) => new Path(new List<(string, bool)>());
+    public static Path Empty() => new Path(new List<(string, bool)>());
 
     public string Dest => Steps[^1].name;
 

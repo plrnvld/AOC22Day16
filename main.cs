@@ -21,9 +21,30 @@ class Program
         Console.WriteLine();
 
         var solver = new Solver(valves);
+
+        const string origin = "AA";
+        var destMap = solver.DestDirections(origin);
+
+        foreach (var (dest, steps) in destMap)
+        {
+            Console.WriteLine($"Route {origin}->{dest}: {string.Join("->", steps)} ");            
+        }
+
+        Console.WriteLine();
+        
+        const string origin2 = "HH";
+        var destMap2 = solver.DestDirections(origin2);
+
+        foreach (var (dest, steps) in destMap2)
+        {
+            Console.WriteLine($"Route {origin2}->{dest}: {string.Join("->", steps)} ");            
+        }
+        
+        
+        /*
         var maxBenefit = 0;
         Valve bestValve = null;
-
+       
         void CheckValve(Valve valve, ScorePath path)
         {
             if (path.CanOpen(valve.Name))
@@ -41,12 +62,14 @@ class Program
                 }                
             }            
         }
+        
 
         solver.VisitBFS(start, CheckValve, maxSteps);
 
         Console.WriteLine();
         Console.WriteLine($"Best next valve is {bestValve} with benefit {maxBenefit}");
-
+        */
+        
         // var result = solver.Solve(start, 30, maxSteps);
         //
         // var bestScore = 0;
