@@ -17,70 +17,86 @@ class Solver
     }
 
     /*
-    public ScorePath FindPath(string start, int maxSteps)
+    public IEnumerable<ScorePath> FindAllPaths(string start, int maxSteps)
     {
         var valvesToOpen = Valves.Values.Where(v => v.Flow > 0).ToList();
-        var numSteps = 0;
-        var path = Path.Empty();
-
-        while (numSteps < maxSteps && valvesToOpen.Any())
-        {
-            var next = valvesToOpen.First();
-            valvesToOpen.RemoveAt(0);
-
-            // Console.WriteLine($"  > moving to {next.Name}.");
-
-            var steps = GetSteps(start, next.Name);
-            var addedStepCount = steps.Count + 1; // Include opening the destination value
-
-            if (numSteps + addedStepCount > maxSteps)
-            {
-                // Console.WriteLine($"  > cannot move to {next.Name}, step count would be {(numSteps + addedStepCount)}.");
-                return ScorePath.From(path, maxSteps, Valves);
-            }
-
-            path = path.AddSteps(steps, openLast: true);
-            numSteps += addedStepCount;
-        }
-
-        return ScorePath.From(path, maxSteps, Valves);
+        var paths = ExpandPaths(start, Path.Empty(), 0, valvesToOpen, maxSteps);
+        return paths.Select(p => ScorePath.From(p, maxSteps, Valves));        
     }
     */
 
     public IEnumerable<ScorePath> FindAllPaths(string start, int maxSteps)
     {
-        var valvesToOpen = Valves.Values.Where(v => v.Flow > 0).ToList();
-        return ExpandPaths(start, Path.Empty(), 0, valvesToOpen, maxSteps);
+        var moves = Valves[start].Neighbors.Select(n => Move.Step(n.Name));
+        var nextPaths = moves.Select(m => ScorePath.Empty(maxSteps).AddMove(m, Valves)).ToList();
+        return ExpandPathsFiltered(1, maxSteps, nextPaths);
     }
 
-    public List<ScorePath> ExpandPaths(string currentLocation, Path currPath, int numSteps, IEnumerable<Valve> closedValves, int maxSteps)
+    public List<ScorePath> ExpandPathsFiltered(int i, int maxSteps, List<ScorePath> paths)
     {
+        Console.WriteLine($"> Expanding level {i + 1}");
+
+        if (i == maxSteps)
+            return paths;
+
+        var filteredPaths = WhereSubPathIsOptimal(i, paths);
+
+        var longerPaths = new List<ScorePath>();
+
+        foreach (var path in filteredPaths)
+        {
+            var moves = path.NextMoves(Valves);
+            var nextPaths = moves.Select(m => path.AddMove(m, Valves));
+
+            longerPaths.AddRange(nextPaths);
+        }
+
+        Console.WriteLine($"  > Num paths: {longerPaths.Count}");
+        return ExpandPathsFiltered(i + 1, maxSteps, longerPaths);
+    }
+
+    public IEnumerable<ScorePath> WhereSubPathIsOptimal(int i, List<ScorePath> paths)
+    {
+        if (i == 10 || i == 15 || i == 20 || i == 25)
+            return paths.OrderByDescending(p => p.Score).Take(1000);
+
         var result = new List<ScorePath>();
+        foreach (var group in paths.GroupBy(p => p.FilterKey))        
+            result.Add(group.MaxBy(p => p.Score));
+
+        return result;
+    }
+
+    public List<Path> ExpandPaths(string currentLocation, Path currPath, int numSteps, IEnumerable<Valve> closedValves, int maxSteps)
+    {
+        var result = new List<Path>();
 
         foreach (var closedValve in closedValves)
         {
-            
             var steps = GetSteps(currentLocation, closedValve.Name);
             var numStepsTotal = numSteps + steps.Count + 1; // Include opening the destination value
-            
+
             if (numStepsTotal > maxSteps)
             {
-                result.Add(ScorePath.From(currPath, maxSteps, Valves));
+                result.Add(currPath);
             }
-            else 
+            else
             {
                 var nextPath = currPath.AddSteps(steps, openLast: true);
-                
+
                 var remainingValves = closedValves.Where(v => v != closedValve);
                 if (remainingValves.Any())
                     result.AddRange(ExpandPaths(nextPath.Dest, nextPath, numStepsTotal, remainingValves, maxSteps));
                 else
-                    result.Add(ScorePath.From(nextPath, maxSteps, Valves));
+                    result.Add(nextPath);
             }
         }
 
         return result;
     }
+
+
+
 
     public Dictionary<string, IList<string>> DestDirections(string start)
     {
@@ -129,20 +145,6 @@ class Solver
 
         foreach (var group in groups)
             yield return (group.Key, group.MaxBy(p => p.Score));
-    }
-
-    public IEnumerable<Path> GetPathsFrom(string start, int numSteps, int maxPathLength)
-    {
-        var currLevel = new List<(Valve, Path)> { (Valves[start], Path.Empty()) };
-        var nextLevel = new List<(Valve, Path)>();
-
-        foreach (var (valve, path) in currLevel)
-        {
-            // ##################
-
-        }
-
-        return Enumerable.Empty<Path>();
     }
 
     public void VisitBFS(string start, Action<Valve, ScorePath> valveAction, int maxSteps)

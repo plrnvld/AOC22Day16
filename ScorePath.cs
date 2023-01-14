@@ -90,4 +90,18 @@ record class ScorePath(List<(string name, bool isOpen)> Steps, int Score, int Ma
 
         return new ScorePath(path.Steps, score, maxSteps);
     }
+
+    public string FilterKey
+    {
+        get
+        {
+            if (Steps.Count == 0)
+                return string.Empty;
+
+            var initNames = Steps.Select(s => s.Item1).Take(Steps.Count - 1);
+            var lastName = Steps[^1];
+
+            return string.Concat(initNames.OrderBy(n => n)) + lastName;
+        }
+    }
 }
