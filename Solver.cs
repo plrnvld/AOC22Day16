@@ -59,23 +59,21 @@ class Solver
 
         foreach (var closedValve in closedValves)
         {
-            var numStepsLocal = numSteps;
             
             var steps = GetSteps(currentLocation, closedValve.Name);
-            var addedStepCount = steps.Count + 1; // Include opening the destination value
-
-            if (numStepsLocal + addedStepCount > maxSteps)
+            var numStepsTotal = numSteps + steps.Count + 1; // Include opening the destination value
+            
+            if (numStepsTotal > maxSteps)
             {
                 result.Add(ScorePath.From(currPath, maxSteps, Valves));
             }
             else 
             {
                 var nextPath = currPath.AddSteps(steps, openLast: true);
-                numStepsLocal += addedStepCount;
-
+                
                 var remainingValves = closedValves.Where(v => v != closedValve);
                 if (remainingValves.Any())
-                    result.AddRange(ExpandPaths(nextPath.Dest, nextPath, numStepsLocal, remainingValves, maxSteps));
+                    result.AddRange(ExpandPaths(nextPath.Dest, nextPath, numStepsTotal, remainingValves, maxSteps));
                 else
                     result.Add(ScorePath.From(nextPath, maxSteps, Valves));
             }
@@ -104,7 +102,7 @@ class Solver
     {
         var n = 1;
         var firstLevel = Valves[start].Neighbors
-            .Select(t => new ScorePath(new List<(string, bool)> { (t.To.Name, false) }, 0, maxSteps));
+            .Select(n => new ScorePath(new List<(string, bool)> { (n.Name, false) }, 0, maxSteps));
 
         var groups = firstLevel.GroupBy(p => p.Dest);
 
@@ -167,7 +165,7 @@ class Solver
                     visited.Add(curr);
                 }
 
-                var nextValvesWithPath = curr.Neighbors.Select(t => (t.To, path.AddValveWithoutOpening(t.To, Valves)));
+                var nextValvesWithPath = curr.Neighbors.Select(n => (n, path.AddValveWithoutOpening(n, Valves)));
                 nextLevel.AddRange(nextValvesWithPath);
             }
 
@@ -195,7 +193,7 @@ class Solver
                     visited.Add(curr);
                 }
 
-                var nextValvesWithPath = curr.Neighbors.Select(t => (t.To, path.AddValveWithoutOpening(t.To, Valves)));
+                var nextValvesWithPath = curr.Neighbors.Select(n => (n, path.AddValveWithoutOpening(n, Valves)));
                 nextLevel.AddRange(nextValvesWithPath);
             }
 

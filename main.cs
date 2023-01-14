@@ -7,15 +7,12 @@ class Program
 {
     static string start = "AA";
     static int maxSteps = 30;
-    static IList<string> exampleSteps = new[] { "DD", "!CC", "BB", "AA", "II", "JJ", "II", "AA", "DD", "!EE", "FF", "GG", "HH", "GG", "FF", "EE", "DD", "CC" }.ToList();
-
+    
     // "DD,!CC,BB,!AA,!II,JJ,!II,!AA,!DD,!EE,!FF,!GG,HH,!GG,!FF,EE,!DD,CC"
-
-    static IList<string> someAnswer = new[] { "!GC", "!IR", "!JZ", "LY","!EF","WL","EJ","CP","!ZK","!IV","UC","!JD","!IZ","SS","!WI","IR","!WG","LL","!SK","DD","!YY" }.ToList();
 
     public static void Main(string[] args)
     {
-        var valves = ReadValves("Example.txt", clearClosed: false);
+        var valves = ReadValves("Input.txt");
 
         foreach (var valve in valves)
             Console.WriteLine(valve);
@@ -54,7 +51,7 @@ class Program
         Console.WriteLine();
     }
 
-    static List<Valve> ReadValves(string fileName, bool clearClosed)
+    static List<Valve> ReadValves(string fileName)
     {
         List<Valve> allValves = new();
 
@@ -64,53 +61,9 @@ class Program
         foreach (var valve in allValves)
             valve.ConnectNeighbors(allValves);
 
-        var result = clearClosed
-            ? ClearClosedValves(allValves)
-            : allValves;
-
-        return result
+        return allValves
             .OrderBy(v => v.Name)
             .ToList();
-    }
-
-    static IEnumerable<Valve> ClearClosedValves(IEnumerable<Valve> valves)
-    {
-        var clearedValves = new List<Valve>();
-
-        foreach (var valve in valves)
-        {
-            if (valve.Name == "AA" || valve.Flow > 0)
-                clearedValves.Add(valve);
-            else
-                RewireAroundClosedValve(valve);
-        }
-
-        return clearedValves;
-    }
-
-    static void RewireAroundClosedValve(Valve valve)
-    {
-        var outgoing = valve.Neighbors;
-        var incoming = outgoing.SelectMany(t => t.To.Neighbors).Where(t => t.To == valve).ToList();
-
-        foreach (var oldIncoming in incoming)
-        {
-            var outgoingToDifferentPlace = outgoing.Where(t => t.To != oldIncoming.From);
-            foreach (var oldOutgoing in outgoingToDifferentPlace)
-            {
-                var newTunnel = Combine(oldIncoming, oldOutgoing);
-                oldIncoming.From.Neighbors.Remove(oldIncoming);
-                oldIncoming.From.Neighbors.Add(newTunnel);
-            }
-        }
-    }
-
-    static Tunnel Combine(Tunnel t1, Tunnel t2)
-    {
-        if (t1.To != t2.From)
-            throw new Exception($"Tunnel {t1} and {t2} don't connect");
-
-        return new Tunnel(t1.From, t2.To, t1.Steps + t2.Steps);
     }
 
     static int CalculateScore(string start, IList<string> steps, IEnumerable<Valve> allValves)

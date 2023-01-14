@@ -9,7 +9,7 @@ class Valve
 
     IEnumerable<string> _neighborValves;
 
-    public List<Tunnel> Neighbors = new();
+    public List<Valve> Neighbors = new();
     public bool IsOpen { get; set; }
 
     public Valve(string name, int flow, IEnumerable<string> neighborValves)
@@ -25,7 +25,7 @@ class Valve
     public void ConnectNeighbors(List<Valve> allValves)
     {
         foreach (var neighborName in _neighborValves)
-            Neighbors.Add(new Tunnel(this, allValves.First(n => n.Name == neighborName), 1));
+            Neighbors.Add(allValves.First(n => n.Name == neighborName));
     }
 
     public static Valve From(string valveLine)
@@ -39,11 +39,11 @@ class Valve
     }
 
     public bool ReachableFrom(Valve valve)
-        => valve.Neighbors.Any(t => t.To == this);
+        => valve.Neighbors.Any(n => n == this);
 
     public override string ToString()
     {
-        var neighbors = string.Join(" / ", Neighbors.Select(t => $"{t.To.Name} (f={t.To.Flow}, s={t.Steps})"));
+        var neighbors = string.Join(" / ", Neighbors.Select(n => $"{n.Name} (f={n.Flow})"));
         return $"Valve {Name}, f={Flow} --> {neighbors}";
     }
 }

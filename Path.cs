@@ -55,8 +55,8 @@ record class Path(List<(string name, bool isOpen)> Steps)
         if (!isOpen && CanOpen(last))
             yield return Move.Open;
 
-        foreach (var t in valves[last].Neighbors)
-            yield return Move.Step(t.To.Name);
+        foreach (var n in valves[last].Neighbors)
+            yield return Move.Step(n.Name);
     }
 
     public IEnumerable<Path> NextPaths(Dictionary<string, Valve> valves, Valve currValve)
@@ -64,8 +64,7 @@ record class Path(List<(string name, bool isOpen)> Steps)
         // ###############################
         if (Steps.Count == 0)
         {
-            var neighbors = currValve.Neighbors.Select(t => t.To);
-            return neighbors.Select(n => new Path(new List<(string, bool)> { (n.Name, false) }));
+            return currValve.Neighbors.Select(n => new Path(new List<(string, bool)> { (n.Name, false) }));
         }
 
         var moves = NextMoves(valves);

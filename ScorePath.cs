@@ -46,8 +46,8 @@ record class ScorePath(List<(string name, bool isOpen)> Steps, int Score, int Ma
         if (!isOpen && CanOpen(last))
             yield return Move.Open;
 
-        foreach (var t in valves[last].Neighbors)
-            yield return Move.Step(t.To.Name);
+        foreach (var n in valves[last].Neighbors)
+            yield return Move.Step(n.Name);
     }
 
     public int Size() => Steps.Select(t => (t.isOpen ? 2 : 1)).Sum();
@@ -64,7 +64,7 @@ record class ScorePath(List<(string name, bool isOpen)> Steps, int Score, int Ma
 
     public override string ToString()
     {
-        var steps = string.Join(",", Steps.Select(t => $"{(t.isOpen ? "" : "!")}{t.name}"));
+        var steps = string.Join(",", Steps.Select(tup => $"{(tup.isOpen ? "" : "!")}{tup.name}"));
         return $"ScorePath ({Score}, {Size()}): {steps}";
     }
 
