@@ -12,7 +12,7 @@ class Program
 
     public static void Main(string[] args)
     {
-        var valves = ReadValves("Input.txt");
+        var valves = ReadValves("Example.txt");
 
         foreach (var valve in valves)
             Console.WriteLine(valve);
@@ -66,6 +66,7 @@ class Program
             .ToList();
     }
 
+    /*
     static int CalculateScore(string start, IList<string> steps, IEnumerable<Valve> allValves)
     {
         const int maxSteps = 30;
@@ -115,4 +116,5 @@ class Program
         var name = step.StartsWith("!") ? step.Substring(1) : step;
         return allValves.FirstOrDefault(v => v.Name == name) ?? throw new Exception($"Valve {name} not found");
     }
+    */
 }

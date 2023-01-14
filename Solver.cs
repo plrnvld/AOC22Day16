@@ -19,7 +19,12 @@ class Solver
     public IEnumerable<ScorePath> FindAllPaths(string start, int maxSteps)
     {
         var moves = Valves[start].Neighbors.Select(n => Move.Step(n.Name));
-        var nextPaths = moves.Select(m => ScorePath.Empty(maxSteps).AddMove(m, Valves)).ToList();
+        var empty = ScorePath.Empty(maxSteps);
+        var nextPaths = new List<ScorePath>();
+        foreach (var hMove in moves)        
+            foreach (var eMove in moves)            
+                nextPaths.Add(empty.AddMove(hMove, eMove, Valves));        
+        
         return ExpandPathsFiltered(1, maxSteps, nextPaths);
     }
 
@@ -36,10 +41,17 @@ class Solver
 
         foreach (var path in filteredPaths)
         {
-            var moves = path.NextMoves(Valves);
-            var nextPaths = moves.Select(m => path.AddMove(m, Valves));
+            var humanMoves = path.NextHumanMoves(Valves);
+            var elephantMoves = path.NextHumanMoves(Valves);
 
-            longerPaths.AddRange(nextPaths);
+            foreach (var hMove in humanMoves)
+            {
+                foreach (var eMove in elephantMoves)
+                {                    
+                    var nextPath = path.AddMove(hMove, eMove, Valves);
+                    longerPaths.Add(nextPath);
+                }
+            }
         }
 
         Console.WriteLine($"  > Num paths: {longerPaths.Count}");
@@ -74,6 +86,7 @@ class Solver
 
     public IList<string> GetSteps(string from, string to) => routingDict[from].Value[to];
 
+    /*
     public IEnumerable<(string, ScorePath)> Solve(string start, int numSteps, int maxSteps)
     {
         var n = 1;
@@ -106,7 +119,9 @@ class Solver
         foreach (var group in groups)
             yield return (group.Key, group.MaxBy(p => p.Score));
     }
+    */
 
+    /*
     public void VisitBFS(string start, Action<Valve, ScorePath> valveAction, int maxSteps)
     {
         var currLevel = new List<(Valve, ScorePath)> { (Valves[start], ScorePath.Empty(maxSteps)) };
@@ -136,7 +151,9 @@ class Solver
             nextLevel.Clear();
         }
     }
+    */
 
+    
     public void VisitBFS(string start, Action<Valve, Path> valveAction)
     {
         var currLevel = new List<(Valve, Path)> { (Valves[start], Path.Empty()) };
