@@ -20,7 +20,6 @@ class Program
         Console.WriteLine();
 
         var solver = new Solver(valves);
-
         
         var paths = solver.FindAllPaths(start, maxSteps);
 
@@ -38,57 +37,6 @@ class Program
         
         Console.WriteLine($"\nBest score: {bestScore}");
         Console.WriteLine($"\nBest path: {bestPath}");
-        
-
-        /*
-        var path = ScorePath.Empty(maxSteps);
-        Console.WriteLine(path+"\n");
-
-        Console.WriteLine("== Minute 1 ==");
-        path = path.AddMove(Move.Step("II"), Move.Step("DD"), solver.Valves);
-        Console.WriteLine(path+"\n");
-
-        Console.WriteLine("== Minute 2 ==");
-        path = path.AddMove(Move.Step("JJ"), Move.Open, solver.Valves);
-        Console.WriteLine(path+"\n");
-
-        Console.WriteLine("== Minute 3 ==");
-        path = path.AddMove(Move.Open, Move.Step("EE"), solver.Valves);
-        Console.WriteLine(path+"\n");  
-
-        Console.WriteLine("== Minute 4 ==");
-        path = path.AddMove(Move.Step("II"), Move.Step("FF"), solver.Valves);
-        Console.WriteLine(path+"\n");
-
-        Console.WriteLine("== Minute 5 ==");
-        path = path.AddMove(Move.Step("AA"), Move.Step("GG"), solver.Valves);
-        Console.WriteLine(path+"\n");
-
-        Console.WriteLine("== Minute 6 ==");
-        path = path.AddMove(Move.Step("BB"), Move.Step("HH"), solver.Valves);
-        Console.WriteLine(path+"\n");
-
-        Console.WriteLine("== Minute 7 ==");
-        path = path.AddMove(Move.Open, Move.Open, solver.Valves);
-        Console.WriteLine(path+"\n"); 
-
-        Console.WriteLine("== Minute 8 ==");
-        path = path.AddMove(Move.Step("CC"), Move.Step("GG"), solver.Valves);
-        Console.WriteLine(path+"\n"); 
-
-        Console.WriteLine("== Minute 9 ==");
-        path = path.AddMove(Move.Open, Move.Step("FF"), solver.Valves);
-        Console.WriteLine(path+"\n"); 
-
-        Console.WriteLine("== Minute 10 ==");
-        path = path.AddMove(Move.Step("BB"), Move.Step("EE"), solver.Valves);
-        Console.WriteLine(path+"\n"); 
-
-        Console.WriteLine("== Minute 11 ==");
-        path = path.AddMove(Move.Step("CC"), Move.Open, solver.Valves);
-        Console.WriteLine(path+"\n"); 
-        */
-        
     }
 
     static void ShowSteps(string from, string to, Solver solver)
@@ -112,56 +60,7 @@ class Program
             .OrderBy(v => v.Name)
             .ToList();
     }
-
-    /*
-    static int CalculateScore(string start, IList<string> steps, IEnumerable<Valve> allValves)
-    {
-        const int maxSteps = 30;
-        int score = 0;
-
-        var curr = FindValve(start, allValves);
-
-        var numSteps = 0;
-
-        foreach (var step in steps)
-        {
-            numSteps += 1;
-
-            var shouldOpen = !step.StartsWith("!");
-            var next = FindValve(step, allValves);
-            var isOpen = next.IsOpen;
-
-            Console.WriteLine();
-            Console.WriteLine($"== Minute {numSteps} ==");
-            Console.WriteLine($"You move to {step}.");
-
-            if (!isOpen && shouldOpen)
-            {
-                numSteps += 1;
-
-                next.IsOpen = true;
-
-                Console.WriteLine();
-                Console.WriteLine($"== Minute {numSteps} ==");
-                Console.WriteLine($"You open valve {step}.");
-
-                var remainingSteps = maxSteps - numSteps;
-                if (numSteps <= maxSteps)
-                    score += next.Flow * remainingSteps;
-                else
-                    Console.WriteLine($"Stopped counting: num steps = {numSteps} > max steps = {maxSteps}");
-            }
-
-            curr = next;
-        }
-
-        return score;
-    }
-
-    static Valve FindValve(string step, IEnumerable<Valve> allValves)
-    {
-        var name = step.StartsWith("!") ? step.Substring(1) : step;
-        return allValves.FirstOrDefault(v => v.Name == name) ?? throw new Exception($"Valve {name} not found");
-    }
-    */
 }
+
+// 2478 too low
+// 2513!

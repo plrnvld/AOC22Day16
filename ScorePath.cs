@@ -22,9 +22,7 @@ record class ScorePath(List<(string humanName, bool humanOpen, string elephantNa
             var rem = MaxSteps - Size() - 1;
             var added = rem * valves[lastHuman].Flow + rem * valves[lastElephant].Flow;
             var newScore = Score + added;
-            // Console.WriteLine($"Human opens {lastHuman}");
-            // Console.WriteLine($"Elephant opens {lastElephant}");
-            // Console.WriteLine($"> Adding {added} ({remHuman} * {valves[lastHuman].Flow} + {remElephant} * {valves[lastElephant].Flow})");
+            
             return new ScorePath(newSteps, newScore, MaxSteps);
         }
         else if (humanMove.IsOpen)
@@ -36,8 +34,6 @@ record class ScorePath(List<(string humanName, bool humanOpen, string elephantNa
             var rem = MaxSteps - Size() - 1;
             var added = rem * valves[lastHuman].Flow;
             var newScore = Score + added;
-            // Console.WriteLine($"Human opens {lastHuman}");
-            // Console.WriteLine($"> Adding {added} ({remHuman} * {valves[lastHuman].Flow} + {remElephant} * 0)");
             
             return new ScorePath(newSteps, newScore, MaxSteps);
         }
@@ -50,8 +46,6 @@ record class ScorePath(List<(string humanName, bool humanOpen, string elephantNa
             var rem = MaxSteps - Size() - 1;
             var added = rem * valves[lastElephant].Flow;
             var newScore = Score + added;
-            // Console.WriteLine($"Elephant opens {lastElephant}");
-            // Console.WriteLine($"> Adding {added} ({remHuman} * 0 + {remElephant} * {valves[lastElephant].Flow})");
             
             return new ScorePath(newSteps, newScore, MaxSteps);
         }
@@ -69,21 +63,34 @@ record class ScorePath(List<(string humanName, bool humanOpen, string elephantNa
     public IEnumerable<Move> NextHumanMoves(Dictionary<string, Valve> valves)
     {
         var (lastHuman, humanOpen, _, _) = Steps.Last();
-        if (!humanOpen && CanOpen(lastHuman))
-            yield return Move.Open;
+        var valve = valves[lastHuman];
+        
+        if (valve.Flow > 0 && !humanOpen && CanOpen(lastHuman))
+            yield return Move.Open;        
 
-        foreach (var n in valves[lastHuman].Neighbors)
-            yield return Move.Step(n.Name);
+        foreach (var n in valve.Neighbors)
+        {
+            var isRepeat = Steps.Count > 1 && !humanOpen && Steps[^2].humanName == n.Name
+                || Steps.Count > 2 && !humanOpen && Steps[^3].elephantName == n.Name;
+            if (!isRepeat)
+                yield return Move.Step(n.Name);
+        }
     }
 
     public IEnumerable<Move> NextElephantMoves(Dictionary<string, Valve> valves)
     {
         var (_, _, lastElephant, elephantOpen) = Steps.Last();
-        if (!elephantOpen && CanOpen(lastElephant))
+        var valve = valves[lastElephant];
+        if (valve.Flow > 0 && !elephantOpen && CanOpen(lastElephant))
             yield return Move.Open;
 
-        foreach (var n in valves[lastElephant].Neighbors)
-            yield return Move.Step(n.Name);
+        foreach (var n in valve.Neighbors)
+        {
+            var isRepeat = Steps.Count > 1 && !elephantOpen && Steps[^2].elephantName == n.Name 
+                || Steps.Count > 2 && !elephantOpen && Steps[^3].elephantName == n.Name;
+            if (!isRepeat)
+                yield return Move.Step(n.Name);
+        }
     }
 
     public int Size() => Steps.Select(t => (t.humanOpen && t.elephantOpen ? 2 : 1)).Sum();
@@ -101,9 +108,7 @@ record class ScorePath(List<(string humanName, bool humanOpen, string elephantNa
             if (Steps.Count == 0)
                 return string.Empty;
 
-            var initNames = Steps.Where(s => s.humanOpen).Select(s => s.humanName)
-                .Concat(Steps.Where(s => s.elephantOpen).Select(s => s.elephantName))
-                .Take(Steps.Count - 1);
+            var initNames = Steps.Take(Steps.Count - 1).Where(s => s.humanOpen).Select(s => s.humanName).Concat(Steps.Where(s => s.elephantOpen).Select(s => s.elephantName));                
 
             var lastNames = new[] { Steps[^1].humanName, Steps[^1].elephantName }.OrderBy(n => n);
 

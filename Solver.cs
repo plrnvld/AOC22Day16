@@ -21,11 +21,51 @@ class Solver
         var moves = Valves[start].Neighbors.Select(n => Move.Step(n.Name));
         var empty = ScorePath.Empty(maxSteps);
         var nextPaths = new List<ScorePath>();
-        foreach (var hMove in moves)        
-            foreach (var eMove in moves)            
-                nextPaths.Add(empty.AddMove(hMove, eMove, Valves));        
-        
-        return ExpandPathsFiltered(1, maxSteps, nextPaths);
+        foreach (var hMove in moves)
+            foreach (var eMove in moves)
+                nextPaths.Add(empty.AddMove(hMove, eMove, Valves));
+
+        return ExpandPathsFilteredNoRecursion(1, maxSteps, nextPaths);
+    }
+
+    public List<ScorePath> ExpandPathsFilteredNoRecursion(int i, int maxSteps, List<ScorePath> paths)
+    {
+        var pathsWithLevel = new List<ScorePath>(paths);
+
+        while (i + 1 < maxSteps)
+        {
+            Console.WriteLine($"> Expanding level {i + 1}, max steps = {maxSteps}");
+            
+            var filteredPaths = WhereSubPathIsOptimal(i, pathsWithLevel);
+
+            var longerPaths = new List<ScorePath>();
+
+            foreach (var path in filteredPaths)
+            {
+                var humanMoves = path.NextHumanMoves(Valves);
+                var elephantMoves = path.NextElephantMoves(Valves);
+
+                foreach (var hMove in humanMoves)
+                {
+                    foreach (var eMove in elephantMoves)
+                    {
+                        var openSame = hMove.IsOpen && eMove.IsOpen && path.HumanDest == path.ElephantDest;
+                        if (!openSame)
+                        {
+                            var nextPath = path.AddMove(hMove, eMove, Valves);
+                            longerPaths.Add(nextPath);
+                        }
+                    }
+                }
+            }
+
+            Console.WriteLine($"  > Num paths: {longerPaths.Count}");
+            
+            pathsWithLevel = longerPaths;
+            i++;
+        }
+
+        return pathsWithLevel;
     }
 
     public List<ScorePath> ExpandPathsFiltered(int i, int maxSteps, List<ScorePath> paths)
@@ -47,7 +87,7 @@ class Solver
             foreach (var hMove in humanMoves)
             {
                 foreach (var eMove in elephantMoves)
-                {           
+                {
                     var openSame = hMove.IsOpen && eMove.IsOpen && path.HumanDest == path.ElephantDest;
                     if (!openSame)
                     {
@@ -65,15 +105,15 @@ class Solver
     public IEnumerable<ScorePath> WhereSubPathIsOptimal(int i, List<ScorePath> paths)
     {
         var result = new List<ScorePath>();
-        foreach (var group in paths.GroupBy(p => p.FilterKey))        
+        foreach (var group in paths.GroupBy(p => p.FilterKey))
             result.Add(group.MaxBy(p => p.Score));
 
-        if (i == 8 || i == 12 || i == 16 || i == 20 || i == 24)
-            result = paths.OrderByDescending(p => p.Score).Take(100).ToList();
+        if (i == 10 || i > 10 && (i + 10) % 9 == 0)
+            result = paths.OrderByDescending(p => p.Score).Take(300).ToList();
 
         return result;
     }
-    
+
     public Dictionary<string, IList<string>> DestDirections(string start)
     {
         Console.WriteLine($"> calculcating destinations from {start}.");

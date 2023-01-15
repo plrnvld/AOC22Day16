@@ -67,11 +67,4 @@ record class Path(List<(string name, bool isOpen)> Steps)
         var steps = string.Join(",", Steps.Select(tup => $"{(tup.isOpen ? "" : "!")}{tup.name}"));
         return $"Path (size={Size()}): {steps}";
     }
-
-    public static Path FromAnswer(string answer)
-    {
-        var splitted = answer.Split(",");
-        var steps = splitted.Select(step => step.StartsWith("!") ? (step.Substring(1), false) : (step, true)).ToList();
-        return new Path(steps);
-    }
 }
