@@ -6,13 +6,13 @@ using System.Linq;
 class Program
 {
     static string start = "AA";
-    static int maxSteps = 30;
+    static int maxSteps = 26;
 
     // "DD,!CC,BB,!AA,!II,JJ,!II,!AA,!DD,!EE,!FF,!GG,HH,!GG,!FF,EE,!DD,CC"
 
     public static void Main(string[] args)
     {
-        var valves = ReadValves("Example.txt");
+        var valves = ReadValves("Input.txt");
 
         foreach (var valve in valves)
             Console.WriteLine(valve);
@@ -20,28 +20,75 @@ class Program
         Console.WriteLine();
 
         var solver = new Solver(valves);
+
+        
         var paths = solver.FindAllPaths(start, maxSteps);
 
         var bestScore = 0;
+        var bestPath = ScorePath.Empty(maxSteps);
 
         foreach (var path in paths)
         {
-            bestScore = Math.Max(bestScore, path.Score);
-            //if (path.Score > 1600)
-            //    Console.WriteLine($"Good: {path}");  
+            if (path.Score > bestScore)
+            {
+                bestScore = path.Score;
+                bestPath = path;
+            }
         }
-
+        
         Console.WriteLine($"\nBest score: {bestScore}");
-
-        // Good: ScorePath (1695, 18): BB,CC,DD,!AA,!II,JJ,!II,!AA,!DD,!EE,!FF,!GG,HH
-        // "DD,!CC,BB,!AA,!II,JJ,!II,!AA,!DD,!EE,!FF,!GG,HH,!GG,!FF,EE,!DD,CC"
+        Console.WriteLine($"\nBest path: {bestPath}");
+        
 
         /*
-        var path = Path.FromAnswer("DD,!CC,BB,!AA,!II,JJ,!II,!AA,!DD,!EE,!FF,!GG,HH,!GG,!FF,EE,!DD,CC");
-        var scorePath = ScorePath.From(path, maxSteps, solver.Valves);
+        var path = ScorePath.Empty(maxSteps);
+        Console.WriteLine(path+"\n");
 
-        Console.WriteLine(scorePath);
+        Console.WriteLine("== Minute 1 ==");
+        path = path.AddMove(Move.Step("II"), Move.Step("DD"), solver.Valves);
+        Console.WriteLine(path+"\n");
+
+        Console.WriteLine("== Minute 2 ==");
+        path = path.AddMove(Move.Step("JJ"), Move.Open, solver.Valves);
+        Console.WriteLine(path+"\n");
+
+        Console.WriteLine("== Minute 3 ==");
+        path = path.AddMove(Move.Open, Move.Step("EE"), solver.Valves);
+        Console.WriteLine(path+"\n");  
+
+        Console.WriteLine("== Minute 4 ==");
+        path = path.AddMove(Move.Step("II"), Move.Step("FF"), solver.Valves);
+        Console.WriteLine(path+"\n");
+
+        Console.WriteLine("== Minute 5 ==");
+        path = path.AddMove(Move.Step("AA"), Move.Step("GG"), solver.Valves);
+        Console.WriteLine(path+"\n");
+
+        Console.WriteLine("== Minute 6 ==");
+        path = path.AddMove(Move.Step("BB"), Move.Step("HH"), solver.Valves);
+        Console.WriteLine(path+"\n");
+
+        Console.WriteLine("== Minute 7 ==");
+        path = path.AddMove(Move.Open, Move.Open, solver.Valves);
+        Console.WriteLine(path+"\n"); 
+
+        Console.WriteLine("== Minute 8 ==");
+        path = path.AddMove(Move.Step("CC"), Move.Step("GG"), solver.Valves);
+        Console.WriteLine(path+"\n"); 
+
+        Console.WriteLine("== Minute 9 ==");
+        path = path.AddMove(Move.Open, Move.Step("FF"), solver.Valves);
+        Console.WriteLine(path+"\n"); 
+
+        Console.WriteLine("== Minute 10 ==");
+        path = path.AddMove(Move.Step("BB"), Move.Step("EE"), solver.Valves);
+        Console.WriteLine(path+"\n"); 
+
+        Console.WriteLine("== Minute 11 ==");
+        path = path.AddMove(Move.Step("CC"), Move.Open, solver.Valves);
+        Console.WriteLine(path+"\n"); 
         */
+        
     }
 
     static void ShowSteps(string from, string to, Solver solver)

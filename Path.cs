@@ -60,29 +60,7 @@ record class Path(List<(string name, bool isOpen)> Steps)
             yield return Move.Step(n.Name);
     }
 
-    public IEnumerable<Path> NextPaths(Dictionary<string, Valve> valves, Valve currValve)
-    {
-        // ###############################
-        if (Steps.Count == 0)
-        {
-            return currValve.Neighbors.Select(n => new Path(new List<(string, bool)> { (n.Name, false) }));
-        }
-
-        var moves = NextMoves(valves);
-        return moves.Select(m => AddMove(m, valves));
-    }
-
     public int Size() => Steps.Select(t => (t.isOpen ? 2 : 1)).Sum();
-
-    public int LastValveOpeningBenefit(Dictionary<string, Valve> valves, int maxSteps)
-    {
-        var (last, isOpen) = Steps.Last();
-        if (isOpen || !CanOpen(last))
-            throw new Exception($"Cannot open last valve {last}");
-
-        return (maxSteps - Size() - 1) * valves[last].Flow;
-
-    }
 
     public override string ToString()
     {
